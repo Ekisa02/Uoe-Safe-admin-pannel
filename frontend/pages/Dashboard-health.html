@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UoE Safe | Health Department Dashboard</title>
+    
+    <!-- Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js for Data Visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* ====== MODERN DESIGN SYSTEM ====== */
+        :root {
+            /* Professional Healthcare Color Palette */
+            --primary-50: #E0F2F1;
+            --primary-100: #B2DFDB;
+            --primary-200: #80CBC4;
+            --primary-300: #4DB6AC;
+            --primary-400: #26A69A;
+            --primary-500: #009688; /* Primary Teal */
+            --primary-600: #00897B;
+            --primary-700: #00796B;
+            --primary-800: #00695C;
+            --primary-900: #004D40;
+            
+            --accent-50: #FCE4EC;
+            --accent-100: #F8BBD0;
+            --accent-200: #F48FB1;
+            --accent-300: #F06292;
+            --accent-400: #EC407A;
+            --accent-500: #E91E63; /* Women's Health Accent */
+            --accent-600: #D81B60;
+            --accent-700: #C2185B;
+            --accent-800: #AD1457;
+            --accent-900: #880E4F;
+            
+            /* Neutral Palette */
+            --gray-50: #FAFAFA;
+            --gray-100: #F5F5F5;
+            --gray-200: #EEEEEE;
+            --gray-300: #E0E0E0;
+            --gray-400: #BDBDBD;
+            --gray-500: #9E9E9E;
+            --gray-600: #757575;
+            --gray-700: #616161;
+            --gray-800: #424242;
+            --gray-900: #212121;
+            
+            /* Semantic Colors */
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --error: #F44336;
+            --info: #2196F3;
+            
+            /* Layout Variables */
+            --sidebar-width: 280px;
+            --border-radius-sm: 8px;
+            --border-radius-md: 12px;
+            --border-radius-lg: 16px;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+            --transition-fast: 150ms ease;
+            --transition-base: 250ms ease;
+            --transition-slow: 350ms ease;
+            
+            /* Typography */
+            --font-primary: 'Inter', sans-serif;
+            --font-secondary: 'Poppins', sans-serif;
+        }
+
+        /* ====== RESET & BASE STYLES ====== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: linear-gradient(135deg, var(--gray-50) 0%, #f8fafc 100%);
+            color: var(--gray-900);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ====== LOADING ANIMATIONS ====== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--primary-100);
+            border-top-color: var(--primary-500);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ====== MODERN SIDEBAR ====== */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-900) 0%, var(--primary-800) 100%);
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+            transition: transform var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 28px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            font-family: var(--font-secondary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-header p {
+            font-size: 0.875rem;
+            color: var(--primary-200);
+            opacity: 0.9;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            flex-grow: 1;
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            color: var(--primary-100);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item i {
+            width: 24px;
+            margin-right: 16px;
+            text-align: center;
+            font-size: 1.125rem;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: transparent;
+            transition: all var(--transition-base);
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            padding-left: 28px;
+        }
+
+        .menu-item.active {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            color: white;
+        }
+
+        .menu-item.active::before {
+            background: linear-gradient(180deg, var(--accent-400) 0%, var(--accent-500) 100%);
+            box-shadow: 0 0 12px rgba(233, 30, 99, 0.4);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.125rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--primary-200);
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--border-radius-sm);
+            color: var(--primary-100);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* ====== MAIN CONTENT AREA ====== */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        /* ====== ENHANCED HEADER ====== */
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 24px;
+            border-bottom: 2px solid var(--gray-100);
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-left h1 {
+            font-family: var(--font-secondary);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-800);
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-left p {
+            font-size: 0.95rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 12px 20px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-base);
+            border: 2px solid transparent;
+        }
+
+        .search-box:focus-within {
+            border-color: var(--primary-300);
+            box-shadow: 0 0 0 4px rgba(0, 137, 123, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .search-box i {
+            color: var(--gray-400);
+            transition: color var(--transition-base);
+        }
+
+        .search-box:focus-within i {
+            color: var(--primary-500);
+        }
+
+        .search-box input {
+            border: none;
+            outline: none;
+            background: none;
+            margin-left: 12px;
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            color: var(--gray-800);
+            width: 240px;
+        }
+
+        .search-box input::placeholder {
+            color: var(--gray-400);
+        }
+
+        .notifications {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notification-bell {
+            font-size: 1.5rem;
+            color: var(--gray-500);
+            transition: all var(--transition-base);
+            padding: 8px;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .notification-bell:hover {
+            color: var(--primary-500);
+            background: var(--primary-50);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--accent-500) 0%, var(--accent-700) 100%);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            box-shadow: var(--shadow-sm);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* ====== ENHANCED STATS GRID ====== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 28px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-500), var(--accent-500));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: var(--border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon.total-reports { 
+            background: linear-gradient(135deg, var(--info) 0%, #1976D2 100%);
+        }
+        .stat-icon.pending { 
+            background: linear-gradient(135deg, var(--accent-400) 0%, var(--accent-600) 100%);
+        }
+        .stat-icon.resolved { 
+            background: linear-gradient(135deg, var(--accent-500) 0%, var(--accent-700) 100%);
+        }
+        .stat-icon.users { 
+            background: linear-gradient(135deg, var(--primary-400) 0%, var(--primary-600) 100%);
+        }
+
+        .stat-info h3 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+
+        .stat-info p {
+            font-size: 0.95rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        /* ====== DASHBOARD GRID ====== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 28px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-container, .recent-activity, .priority-stats {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+        }
+
+        .chart-container:hover, .recent-activity:hover, .priority-stats:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .chart-header, .activity-header, .priority-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .chart-header h3, .activity-header h3, .priority-header h3 {
+            font-family: var(--font-secondary);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .view-all {
+            font-size: 0.875rem;
+            color: var(--primary-500);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all var(--transition-base);
+            padding: 6px 12px;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .view-all:hover {
+            background: var(--primary-50);
+            padding: 6px 12px;
+        }
+
+        .activity-list {
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .activity-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .activity-list::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: 10px;
+        }
+
+        .activity-list::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 10px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 0;
+            border-bottom: 1px solid var(--gray-100);
+            transition: all var(--transition-base);
+            animation: slideInRight 0.5s ease-out backwards;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .activity-item:hover {
+            background: var(--gray-50);
+            border-radius: var(--border-radius-sm);
+            padding: 18px 12px;
+            margin: 0 -12px;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .activity-icon.health {
+            background: linear-gradient(135deg, var(--primary-400) 0%, var(--primary-600) 100%);
+        }
+
+        .activity-desc {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--gray-800);
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .priority-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--gray-100);
+            transition: all var(--transition-base);
+        }
+
+        .priority-item:hover {
+            background: var(--gray-50);
+            border-radius: var(--border-radius-sm);
+            padding: 16px 12px;
+            margin: 0 -12px;
+        }
+
+        .priority-item:last-child {
+            border-bottom: none;
+        }
+
+        .priority-label {
+            font-weight: 500;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .priority-count {
+            font-weight: 600;
+            background: var(--primary-50);
+            color: var(--primary-700);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            transition: all var(--transition-base);
+        }
+
+        .priority-item:hover .priority-count {
+            background: var(--primary-100);
+            transform: scale(1.05);
+        }
+
+        /* ====== ENHANCED SECTION HEADERS ====== */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--gray-100);
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-secondary);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-800);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* ====== ENHANCED BUTTONS ====== */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .btn:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0, 0); opacity: 0.5; }
+            100% { transform: scale(20, 20); opacity: 0; }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 2px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-300);
+            color: var(--primary-600);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+
+        /* ====== ENHANCED FORMS ====== */
+        select, .form-control {
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius-md);
+            background-color: white;
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            color: var(--gray-800);
+            transition: all var(--transition-base);
+            min-width: 160px;
+        }
+
+        select:focus, .form-control:focus {
+            outline: none;
+            border-color: var(--primary-400);
+            box-shadow: 0 0 0 4px rgba(0, 137, 123, 0.1);
+        }
+
+        /* ====== ENHANCED TABLE ====== */
+        .table-container {
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+            padding: 18px 24px;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary-800);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--primary-100);
+        }
+
+        .data-table td {
+            padding: 18px 24px;
+            font-size: 0.95rem;
+            color: var(--gray-700);
+            border-bottom: 1px solid var(--gray-100);
+            transition: all var(--transition-base);
+        }
+
+        .data-table tbody tr {
+            transition: all var(--transition-base);
+        }
+
+        .data-table tbody tr:hover {
+            background-color: var(--gray-50);
+        }
+
+        .data-table tbody tr:hover td {
+            color: var(--gray-900);
+        }
+
+        .data-table td:last-child {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* ====== ENHANCED MODAL ====== */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 20px;
+            padding: 0;
+            border-radius: var(--border-radius-lg);
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-lg);
+            animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-header {
+            padding: 24px 32px;
+            border-bottom: 2px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-900);
+        }
+
+        .close {
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--gray-500);
+            transition: all var(--transition-base);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .close:hover {
+            color: var(--error);
+            background: var(--gray-100);
+        }
+
+        .modal-body {
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .health-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .detail-item {
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .detail-item label {
+            display: block;
+            font-weight: 600;
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-item span {
+            font-size: 1rem;
+            color: var(--gray-800);
+            line-height: 1.5;
+        }
+
+        .modal-footer {
+            padding: 24px 32px;
+            border-top: 2px solid var(--gray-100);
+            text-align: right;
+            background: var(--gray-50);
+            border-bottom-left-radius: var(--border-radius-lg);
+            border-bottom-right-radius: var(--border-radius-lg);
+        }
+
+        /* ====== TOAST NOTIFICATIONS ====== */
+        .toast {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 18px 24px;
+            border-radius: var(--border-radius-md);
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 400px;
+        }
+
+        .toast-success {
+            background: linear-gradient(135deg, var(--success) 0%, #388E3C 100%);
+            border-left: 4px solid #2E7D32;
+        }
+
+        .toast-error {
+            background: linear-gradient(135deg, var(--error) 0%, #D32F2F 100%);
+            border-left: 4px solid #C62828;
+        }
+
+        .toast-info {
+            background: linear-gradient(135deg, var(--info) 0%, #1976D2 100%);
+            border-left: 4px solid #1565C0;
+        }
+
+        /* ====== RESPONSIVE DESIGN ====== */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-menu-toggle {
+                display: block;
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 99;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-right {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            
+            .search-box input {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>Loading Health Dashboard...</p>
+    </div>
+
+    <!-- Modern Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-heartbeat"></i> UoE Safe</h2>
+            <p>Health Department Dashboard</p>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li class="menu-item active" data-target="dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard Overview</span>
+            </li>
+            <li class="menu-item" data-target="health-data">
+                <i class="fas fa-notes-medical"></i> 
+                <span>Health Data Management</span>
+            </li>
+            <li class="menu-item" data-target="analytics">
+                <i class="fas fa-chart-bar"></i>
+                <span>Health Analytics</span>
+            </li>
+            <li class="menu-item" data-target="system">
+                <i class="fas fa-cog"></i>
+                <span>System Settings</span>
+            </li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">HD</div>
+                <div class="user-details">
+                    <span class="user-name" id="sidebar-user-name">Loading...</span>
+                    <span class="user-role">Health Department</span>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Enhanced Header -->
+        <header class="content-header">
+            <div class="header-left">
+                <h1 id="page-title">Health Dashboard</h1>
+                <p id="page-subtitle">University of Eldoret Health Department • Real-time Monitoring</p>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search health records..." id="health-search">
+                </div>
+                <div class="notifications" title="View Notifications">
+                    <i class="fas fa-bell notification-bell"></i>
+                    <span class="notification-badge" id="notification-count">3</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+            <!-- Enhanced Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon total-reports">
+                        <i class="fas fa-file-medical-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-health-records">0</h3>
+                        <p>Total Health Records</p>
+                        <small class="text-muted">Updated in real-time</small>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="mental-health-cases">0</h3>
+                        <p>Mental Health Cases</p>
+                        <small class="text-muted">Requiring attention</small>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon resolved">
+                        <i class="fas fa-venus"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="womens-health">0</h3>
+                        <p>Women's Health</p>
+                        <small class="text-muted">Specialized care needed</small>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon users">
+                        <i class="fas fa-mars"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="mens-health">0</h3>
+                        <p>Men's Health</p>
+                        <small class="text-muted">Active cases</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Dashboard Grid -->
+            <div class="dashboard-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-pie"></i> Health Concerns Distribution</h3>
+                        <span class="text-muted">Real-time data visualization</span>
+                    </div>
+                    <canvas id="healthChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-users"></i> Gender Distribution</h3>
+                        <span class="text-muted">Patient demographics</span>
+                    </div>
+                    <canvas id="genderChart"></canvas>
+                </div>
+                
+                <div class="recent-activity">
+                    <div class="activity-header">
+                        <h3><i class="fas fa-history"></i> Recent Health Submissions</h3>
+                        <a href="#" class="view-all" onclick="showSection('health-data')">
+                            View All <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="activity-list" id="recent-health-list">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                </div>
+                
+                <div class="priority-stats">
+                    <div class="priority-header">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Top Health Concerns</h3>
+                        <span class="text-muted">Priority areas</span>
+                    </div>
+                    <div class="priority-list" id="health-concerns-list">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Health Data Section -->
+        <section id="health-data" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-database"></i> Health Data Management</h2>
+                <div class="header-actions">
+                    <div class="filters">
+                        <select id="gender-filter">
+                            <option value="">All Genders</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                        <select id="location-filter">
+                            <option value="">All Locations</option>
+                            <option value="Hostel A">Hostel A</option>
+                            <option value="Hostel B">Hostel B</option>
+                            <option value="Campus">Main Campus</option>
+                            <option value="Library">Library</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="exportHealthData()">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Registration No.</th>
+                            <th>Gender</th>
+                            <th>Location</th>
+                            <th>Main Complaint</th>
+                            <th>Mental Health</th>
+                            <th>Women's Health</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="health-table-body">
+                        <!-- Dynamic content loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> Health Analytics & Insights</h2>
+                <div class="date-filter">
+                    <select id="analytics-period">
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d" selected>Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                        <option value="1y">Last Year</option>
+                    </select>
+                </div>
+            </div>
+            <div class="dashboard-grid">
+                <div class="chart-container full-width">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-line"></i> Health Trends Over Time</h3>
+                        <span class="text-muted">Weekly progression</span>
+                    </div>
+                    <canvas id="trendsChart" height="100"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-map-marker-alt"></i> Location-wise Distribution</h3>
+                        <span class="text-muted">Case locations</span>
+                    </div>
+                    <canvas id="locationChart"></canvas>
+                </div>
+                <div class="priority-stats">
+                    <div class="priority-header">
+                        <h3><i class="fas fa-chart-bar"></i> Key Health Metrics</h3>
+                        <span class="text-muted">Performance indicators</span>
+                    </div>
+                    <div class="priority-list" id="health-metrics-list">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="system" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-sliders-h"></i> Health Department Settings</h2>
+            </div>
+            <div class="dashboard-grid">
+                <div class="chart-container">
+                    <h3><i class="fas fa-tags"></i> Health Categories</h3>
+                    <div class="categories-list" id="health-categories-settings">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="fas fa-cogs"></i> System Configuration</h3>
+                    <div class="config-options">
+                        <label class="config-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                            <span>Real-time Health Alerts</span>
+                        </label>
+                        <label class="config-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                            <span>Automated Data Backup</span>
+                        </label>
+                        <label class="config-switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                            <span>Maintenance Mode</span>
+                        </label>
+                        <label class="config-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                            <span>Privacy Protection</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Enhanced Modal -->
+    <div id="healthDetailModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Health Record Details</h3>
+                <span class="close" onclick="closeHealthModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Dynamic content loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeHealthModal()">
+                    <i class="fas fa-times"></i> Close
+                </button>
+                <button class="btn btn-primary" onclick="printRecord()">
+                    <i class="fas fa-print"></i> Print Record
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Config -->
+    <script src="../../../Backend/Firebase/firebaseConfig.js"></script>
+    
+    <!-- Enhanced JavaScript -->
+    <script>
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let healthData = [];
+        let healthReportsListener = null;
+        let chartInstances = {};
+
+        // Hide loading overlay
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 500);
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 50);
+
+            // Remove toast after 4 seconds
+            setTimeout(() => {
+                toast.style.transform = 'translateX(120%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        document.body.removeChild(toast);
+                    }
+                }, 400);
+            }, 4000);
+        }
+
+        // Update user avatar with initials
+        function updateUserAvatar(email) {
+            const avatar = document.getElementById('userAvatar');
+            const name = email.split('@')[0];
+            const initials = name.substring(0, 2).toUpperCase();
+            avatar.textContent = initials;
+        }
+
+        // Authentication check with enhanced loading
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = '../../../index.html';
+                return;
+            }
+            
+            try {
+                // Verify this is a health department user
+                const userDoc = await db.collection('adminUsers').doc(user.uid).get();
+                if (!userDoc.exists || !userDoc.data().departments.includes('health')) {
+                    showToast('Access denied. Health department access required.', 'error');
+                    setTimeout(() => {
+                        auth.signOut();
+                        window.location.href = '../../../index.html';
+                    }, 2000);
+                    return;
+                }
+                
+                // User is authenticated and has access
+                document.getElementById('sidebar-user-name').textContent = user.email;
+                updateUserAvatar(user.email);
+                
+                // Set page title with user info
+                document.title = `UoE Safe | ${user.email.split('@')[0]} - Health Dashboard`;
+                
+                // Load dashboard data
+                setupRealTimeListener();
+                
+                // Hide loading overlay
+                setTimeout(hideLoading, 1000);
+                
+                showToast('Welcome to Health Department Dashboard', 'success');
+                
+            } catch (error) {
+                console.error('Auth error:', error);
+                showToast('Authentication error. Please try again.', 'error');
+            }
+        });
+
+        // Logout function
+        function logout() {
+            showToast('Logging out...', 'info');
+            setTimeout(() => {
+                auth.signOut().then(() => {
+                    window.location.href = '../../../index.html';
+                });
+            }, 1000);
+        }
+
+        // Real-time data listener
+        function setupRealTimeListener() {
+            if (healthReportsListener) {
+                healthReportsListener();
+            }
+            
+            console.log('Setting up real-time health data listener...');
+            healthReportsListener = db.collection('health').orderBy('submissionTimestamp', 'desc')
+                .onSnapshot((querySnapshot) => {
+                    healthData = [];
+                    querySnapshot.forEach((doc) => {
+                        healthData.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+
+                    console.log(`Loaded ${healthData.length} health records`);
+                    
+                    // Update all dashboard components
+                    updateDashboardStats();
+                    initializeHealthCharts();
+                    loadRecentHealthSubmissions();
+                    loadHealthConcerns();
+                    populateHealthTable();
+                    updateSettingsCategories();
+                    
+                }, (error) => {
+                    console.error('Error loading health data:', error);
+                    showToast('Error loading health data', 'error');
+                });
+        }
+
+        // Update dashboard statistics with animation
+        function updateDashboardStats() {
+            const totalRecords = healthData.length;
+            const mentalHealthCases = healthData.filter(record => 
+                record.depression || record.stress || record.mentalStigma || record.academicPressure
+            ).length;
+            const womensHealth = healthData.filter(record => 
+                record.gender === 'Female' && (
+                    record.contraception || record.irregularPeriods || record.menstrualPain || 
+                    record.pregnancyConcerns || record.sanitaryAccess || record.harassment || record.needSafeSpace
+                )
+            ).length;
+            const mensHealth = healthData.filter(record => 
+                record.gender === 'Male' && (record.sexualHealthMale || record.sportsInjury)
+            ).length;
+
+            // Animate number counting
+            animateCounter('total-health-records', totalRecords);
+            animateCounter('mental-health-cases', mentalHealthCases);
+            animateCounter('womens-health', womensHealth);
+            animateCounter('mens-health', mensHealth);
+        }
+
+        // Animate number counter
+        function animateCounter(elementId, finalValue, duration = 1000) {
+            const element = document.getElementById(elementId);
+            const startValue = parseInt(element.textContent) || 0;
+            const increment = finalValue > startValue ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / (finalValue - startValue)));
+            
+            let current = startValue;
+            const timer = setInterval(() => {
+                current += increment;
+                element.textContent = current;
+                if (current === finalValue) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        // Initialize enhanced charts
+        function initializeHealthCharts() {
+            // Health Concerns Distribution Chart
+            const healthCtx = document.getElementById('healthChart').getContext('2d');
+            const healthConcerns = {
+                'Mental Health': healthData.filter(r => r.depression || r.stress || r.mentalStigma).length,
+                'Academic Pressure': healthData.filter(r => r.academicPressure).length,
+                'Sleep Issues': healthData.filter(r => r.sleepIssues).length,
+                'Physical Health': healthData.filter(r => r.flu || r.stomachIssues || r.sportsInjury).length,
+                'Women\'s Health': healthData.filter(r => r.contraception || r.irregularPeriods || r.menstrualPain).length
+            };
+            
+            if (chartInstances.healthChart) {
+                chartInstances.healthChart.destroy();
+            }
+            
+            chartInstances.healthChart = new Chart(healthCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(healthConcerns),
+                    datasets: [{
+                        data: Object.values(healthConcerns),
+                        backgroundColor: [
+                            'rgba(156, 39, 176, 0.8)',
+                            'rgba(33, 150, 243, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(76, 175, 80, 0.8)',
+                            'rgba(233, 30, 99, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(156, 39, 176)',
+                            'rgb(33, 150, 243)',
+                            'rgb(255, 193, 7)',
+                            'rgb(76, 175, 80)',
+                            'rgb(233, 30, 99)'
+                        ],
+                        borderWidth: 2,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            }
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            });
+
+            // Gender Distribution Chart
+            const genderCtx = document.getElementById('genderChart').getContext('2d');
+            const genderCounts = {
+                'Male': healthData.filter(r => r.gender === 'Male').length,
+                'Female': healthData.filter(r => r.gender === 'Female').length,
+                'Other': healthData.filter(r => r.gender !== 'Male' && r.gender !== 'Female').length
+            };
+            
+            if (chartInstances.genderChart) {
+                chartInstances.genderChart.destroy();
+            }
+            
+            chartInstances.genderChart = new Chart(genderCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(genderCounts),
+                    datasets: [{
+                        data: Object.values(genderCounts),
+                        backgroundColor: [
+                            'rgba(0, 137, 123, 0.8)',
+                            'rgba(233, 30, 99, 0.8)',
+                            'rgba(117, 117, 117, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(0, 137, 123)',
+                            'rgb(233, 30, 99)',
+                            'rgb(117, 117, 117)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load recent health submissions with enhanced design
+        function loadRecentHealthSubmissions() {
+            const recentSubmissions = healthData.slice(0, 6);
+            const activityList = document.getElementById('recent-health-list');
+            
+            if (recentSubmissions.length === 0) {
+                activityList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No recent submissions</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            activityList.innerHTML = recentSubmissions.map((record, index) => `
+                <div class="activity-item" style="animation-delay: ${index * 0.1}s">
+                    <div class="activity-icon health">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="activity-content">
+                        <p class="activity-desc">
+                            <strong>${record.registrationNumber || 'Unknown'}</strong> - 
+                            ${record.mainComplaint ? record.mainComplaint.substring(0, 40) + '...' : 'Health concern'}
+                        </p>
+                        <span class="activity-time">
+                            <i class="far fa-clock"></i>
+                            ${formatTimestamp(record.submissionTimestamp)} • 
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${record.location || 'Unknown location'}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load health concerns with priority indicators
+        function loadHealthConcerns() {
+            const concerns = [
+                { name: 'Stress/Anxiety', count: healthData.filter(r => r.stress).length, icon: 'fas fa-brain' },
+                { name: 'Depression', count: healthData.filter(r => r.depression).length, icon: 'fas fa-sad-tear' },
+                { name: 'Sleep Issues', count: healthData.filter(r => r.sleepIssues).length, icon: 'fas fa-bed' },
+                { name: 'Academic Pressure', count: healthData.filter(r => r.academicPressure).length, icon: 'fas fa-graduation-cap' },
+                { name: 'Sanitary Access', count: healthData.filter(r => r.sanitaryAccess).length, icon: 'fas fa-female' },
+                { name: 'Harassment', count: healthData.filter(r => r.harassment).length, icon: 'fas fa-exclamation-triangle' }
+            ].filter(concern => concern.count > 0).sort((a,b) => b.count - a.count);
+
+            const concernsList = document.getElementById('health-concerns-list');
+            
+            if (concerns.length === 0) {
+                concernsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle"></i>
+                        <p>No major concerns reported</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            concernsList.innerHTML = concerns.map(concern => `
+                <div class="priority-item">
+                    <span class="priority-label">
+                        <i class="${concern.icon}"></i>
+                        ${concern.name}
+                    </span>
+                    <span class="priority-count">${concern.count}</span>
+                </div>
+            `).join('');
+        }
+
+        // Update settings categories
+        function updateSettingsCategories() {
+            const concerns = [
+                { name: 'Mental Health', count: healthData.filter(r => r.depression || r.stress || r.mentalStigma).length, color: 'var(--accent-500)' },
+                { name: 'Women\'s Health', count: healthData.filter(r => r.contraception || r.irregularPeriods || r.menstrualPain).length, color: 'var(--accent-600)' },
+                { name: 'General Health', count: healthData.filter(r => r.flu || r.stomachIssues || r.sportsInjury).length, color: 'var(--primary-500)' },
+                { name: 'Academic Health', count: healthData.filter(r => r.academicPressure).length, color: 'var(--info)' }
+            ];
+            
+            const categoriesList = document.getElementById('health-categories-settings');
+            categoriesList.innerHTML = concerns.map(c => `
+                <div class="priority-item">
+                    <span class="priority-label">
+                        <i class="fas fa-circle" style="color: ${c.color}"></i>
+                        ${c.name}
+                    </span>
+                    <span class="priority-count" style="background: ${c.color}20; color: ${c.color}">
+                        ${c.count} cases
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // Populate health table with enhanced design
+        function populateHealthTable() {
+            const tableBody = document.getElementById('health-table-body');
+            const genderFilter = document.getElementById('gender-filter').value;
+            const locationFilter = document.getElementById('location-filter').value;
+            const searchTerm = document.getElementById('health-search').value.toLowerCase();
+            
+            let filteredData = healthData.filter(record => {
+                const matchesGender = !genderFilter || record.gender === genderFilter;
+                const matchesLocation = !locationFilter || record.location === locationFilter;
+                const matchesSearch = !searchTerm || 
+                    (record.registrationNumber && record.registrationNumber.toLowerCase().includes(searchTerm)) ||
+                    (record.email && record.email.toLowerCase().includes(searchTerm)) ||
+                    (record.mainComplaint && record.mainComplaint.toLowerCase().includes(searchTerm));
+                
+                return matchesGender && matchesLocation && matchesSearch;
+            });
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-search" style="font-size: 48px; color: var(--gray-300); margin-bottom: 16px;"></i>
+                            <p style="color: var(--gray-500); font-size: 1.1rem;">No matching records found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tableBody.innerHTML = filteredData.map((record, index) => `
+                <tr style="animation-delay: ${index * 0.05}s">
+                    <td>
+                        <div style="font-weight: 600; color: var(--primary-700);">${record.registrationNumber || 'N/A'}</div>
+                        <small style="color: var(--gray-500);">${record.email || ''}</small>
+                    </td>
+                    <td>
+                        <span class="gender-badge ${record.gender === 'Male' ? 'male' : 'female'}">
+                            <i class="fas fa-${record.gender === 'Male' ? 'mars' : 'venus'}"></i>
+                            ${record.gender || 'N/A'}
+                        </span>
+                    </td>
+                    <td>
+                        <i class="fas fa-map-marker-alt" style="color: var(--gray-500); margin-right: 8px;"></i>
+                        ${record.location || 'N/A'}
+                    </td>
+                    <td title="${record.mainComplaint || ''}">
+                        ${(record.mainComplaint || 'N/A').substring(0, 30)}...
+                    </td>
+                    <td>
+                        ${(record.depression || record.stress || record.mentalStigma) ? 
+                            '<span class="badge badge-warning">Yes</span>' : 
+                            '<span class="badge badge-secondary">No</span>'}
+                    </td>
+                    <td>
+                        ${(record.contraception || record.irregularPeriods || record.menstrualPain) ? 
+                            '<span class="badge badge-accent">Yes</span>' : 
+                            '<span class="badge badge-secondary">No</span>'}
+                    </td>
+                    <td>
+                        <div style="font-size: 0.9rem;">${formatTimestamp(record.submissionTimestamp)}</div>
+                        <small style="color: var(--gray-500);">${formatRelativeTime(record.submissionTimestamp)}</small>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewHealthDetails('${record.id}')" style="padding: 6px 12px;">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="exportSingleRecord('${record.id}')" style="padding: 6px 12px;">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Add CSS for badges
+            const style = document.createElement('style');
+            style.textContent = `
+                .gender-badge {
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .gender-badge.male {
+                    background: var(--primary-50);
+                    color: var(--primary-700);
+                }
+                .gender-badge.female {
+                    background: var(--accent-50);
+                    color: var(--accent-700);
+                }
+                .badge {
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                }
+                .badge-warning {
+                    background: #FFF3E0;
+                    color: #EF6C00;
+                }
+                .badge-accent {
+                    background: var(--accent-50);
+                    color: var(--accent-700);
+                }
+                .badge-secondary {
+                    background: var(--gray-100);
+                    color: var(--gray-600);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Enhanced timestamp formatting
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'N/A';
+            
+            let date;
+            if (timestamp.toDate) {
+                date = timestamp.toDate();
+            } else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+                date = new Date(timestamp);
+            } else {
+                return 'Invalid Date';
+            }
+            
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Relative time formatting
+        function formatRelativeTime(timestamp) {
+            if (!timestamp) return '';
+            
+            let date;
+            if (timestamp.toDate) {
+                date = timestamp.toDate();
+            } else {
+                date = new Date(timestamp);
+            }
+            
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return `${Math.floor(diffDays / 7)}w ago`;
+        }
+
+        // Enhanced view health details modal
+        function viewHealthDetails(recordId) {
+            const record = healthData.find(r => r.id === recordId);
+            if (!record) return;
+
+            const modal = document.getElementById('healthDetailModal');
+            const modalBody = modal.querySelector('#modal-body');
+            const modalTitle = modal.querySelector('#modal-title');
+            
+            modalTitle.textContent = `Health Record: ${record.registrationNumber || 'Unknown'}`;
+            
+            // Build detailed view
+            let detailsHTML = '<div class="health-details-grid">';
+            
+            // Personal Information
+            detailsHTML += `
+                <div class="detail-item full-width">
+                    <h4 style="color: var(--primary-700); margin-bottom: 16px;">
+                        <i class="fas fa-user-circle"></i> Personal Information
+                    </h4>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-id-card"></i> Registration Number</label>
+                    <span>${record.registrationNumber || 'N/A'}</span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <span>${record.email || 'N/A'}</span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-venus-mars"></i> Gender</label>
+                    <span>
+                        <i class="fas fa-${record.gender === 'Male' ? 'mars' : 'venus'}" 
+                           style="color: ${record.gender === 'Male' ? 'var(--primary-600)' : 'var(--accent-600)'}; margin-right: 8px;"></i>
+                        ${record.gender || 'N/A'}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-map-marker-alt"></i> Location</label>
+                    <span>${record.location || 'N/A'}</span>
+                </div>
+            `;
+            
+            // Main Complaint
+            detailsHTML += `
+                <div class="detail-item full-width">
+                    <label><i class="fas fa-comment-medical"></i> Main Complaint</label>
+                    <div style="background: var(--gray-50); padding: 16px; border-radius: var(--border-radius-sm); margin-top: 8px;">
+                        <p style="color: var(--gray-800); line-height: 1.6; white-space: pre-wrap;">${record.mainComplaint || 'No complaint specified'}</p>
+                    </div>
+                </div>
+            `;
+            
+            // General Health Issues
+            const generalIssues = [];
+            if (record.stress) generalIssues.push('Stress/Anxiety');
+            if (record.depression) generalIssues.push('Depression');
+            if (record.sleepIssues) generalIssues.push('Sleep Issues');
+            if (record.academicPressure) generalIssues.push('Academic Pressure');
+            if (record.flu) generalIssues.push('Flu/Common Cold');
+            if (record.stomachIssues) generalIssues.push('Stomach Issues');
+            
+            if (generalIssues.length > 0) {
+                detailsHTML += `
+                    <div class="detail-item full-width">
+                        <label><i class="fas fa-stethoscope"></i> General Health Issues</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                            ${generalIssues.map(issue => `
+                                <span style="background: var(--primary-50); color: var(--primary-700); padding: 6px 12px; border-radius: var(--border-radius-sm); font-size: 0.9rem;">
+                                    <i class="fas fa-check-circle" style="margin-right: 6px;"></i>${issue}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Gender-specific issues
+            if (record.gender === 'Female') {
+                const womensIssues = [];
+                if (record.menstrualPain) womensIssues.push('Menstrual Pain');
+                if (record.irregularPeriods) womensIssues.push('Irregular Periods');
+                if (record.sanitaryAccess) womensIssues.push('Sanitary Access');
+                if (record.contraception) womensIssues.push('Contraception');
+                if (record.stiConcerns) womensIssues.push('STI Concerns');
+                if (record.pregnancyConcerns) womensIssues.push('Pregnancy Concerns');
+                if (record.harassment) womensIssues.push('Harassment');
+                if (record.needSafeSpace) womensIssues.push('Needs Safe Space');
+                
+                if (womensIssues.length > 0) {
+                    detailsHTML += `
+                        <div class="detail-item full-width">
+                            <label><i class="fas fa-venus"></i> Women's Health Issues</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                                ${womensIssues.map(issue => `
+                                    <span style="background: var(--accent-50); color: var(--accent-700); padding: 6px 12px; border-radius: var(--border-radius-sm); font-size: 0.9rem;">
+                                        <i class="fas fa-female" style="margin-right: 6px;"></i>${issue}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            if (record.gender === 'Male') {
+                const mensIssues = [];
+                if (record.mentalStigma) mensIssues.push('Mental Health Stigma');
+                if (record.sportsInjury) mensIssues.push('Sports Injury');
+                if (record.sexualHealthMale) mensIssues.push('Sexual Health');
+                
+                if (mensIssues.length > 0) {
+                    detailsHTML += `
+                        <div class="detail-item full-width">
+                            <label><i class="fas fa-mars"></i> Men's Health Issues</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                                ${mensIssues.map(issue => `
+                                    <span style="background: var(--primary-50); color: var(--primary-700); padding: 6px 12px; border-radius: var(--border-radius-sm); font-size: 0.9rem;">
+                                        <i class="fas fa-male" style="margin-right: 6px;"></i>${issue}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Submission Information
+            detailsHTML += `
+                <div class="detail-item full-width">
+                    <label><i class="fas fa-calendar-check"></i> Submission Details</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 8px;">
+                        <div>
+                            <small style="color: var(--gray-600);">Submitted</small>
+                            <div>${formatTimestamp(record.submissionTimestamp)}</div>
+                        </div>
+                        <div>
+                            <small style="color: var(--gray-600);">Time Since</small>
+                            <div>${formatRelativeTime(record.submissionTimestamp)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            detailsHTML += '</div>';
+            modalBody.innerHTML = detailsHTML;
+            modal.style.display = 'flex';
+            
+            // Add modal animations
+            modal.style.animation = 'fadeIn 0.3s ease';
+            modal.querySelector('.modal-content').style.animation = 'modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
+
+        // Close modal
+        function closeHealthModal() {
+            const modal = document.getElementById('healthDetailModal');
+            modal.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Export health data
+        function exportHealthData() {
+            if (healthData.length === 0) {
+                showToast('No data to export', 'error');
+                return;
+            }
+            
+            const headers = ['Registration', 'Email', 'Gender', 'Location', 'Main Complaint', 'Stress', 'Depression', 'Sleep Issues', 'Academic Pressure', 'Submitted'];
+            const csvData = healthData.map(record => [
+                record.registrationNumber || '',
+                record.email || '',
+                record.gender || '',
+                record.location || '',
+                (record.mainComplaint || '').replace(/,/g, ';'),
+                record.stress ? 'Yes' : 'No',
+                record.depression ? 'Yes' : 'No',
+                record.sleepIssues ? 'Yes' : 'No',
+                record.academicPressure ? 'Yes' : 'No',
+                formatTimestamp(record.submissionTimestamp)
+            ]);
+            
+            const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `health-data-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showToast(`Exported ${healthData.length} records successfully`, 'success');
+        }
+
+        // Export single record
+        function exportSingleRecord(recordId) {
+            const record = healthData.find(r => r.id === recordId);
+            if (!record) return;
+            
+            const data = {
+                'Registration Number': record.registrationNumber || 'N/A',
+                'Email': record.email || 'N/A',
+                'Gender': record.gender || 'N/A',
+                'Location': record.location || 'N/A',
+                'Main Complaint': record.mainComplaint || 'N/A',
+                'Stress/Anxiety': record.stress ? 'Yes' : 'No',
+                'Depression': record.depression ? 'Yes' : 'No',
+                'Sleep Issues': record.sleepIssues ? 'Yes' : 'No',
+                'Academic Pressure': record.academicPressure ? 'Yes' : 'No',
+                'Submitted': formatTimestamp(record.submissionTimestamp)
+            };
+            
+            const text = Object.entries(data).map(([key, value]) => `${key}: ${value}`).join('\n');
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `health-record-${record.registrationNumber || 'unknown'}.txt`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showToast('Record exported successfully', 'success');
+        }
+
+        // Print record
+        function printRecord() {
+            window.print();
+        }
+
+        // Navigation functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('.menu-item');
+            
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    showSection(target);
+                });
+            });
+
+            // Add filter and search listeners
+            document.getElementById('gender-filter').addEventListener('change', populateHealthTable);
+            document.getElementById('location-filter').addEventListener('change', populateHealthTable);
+            document.getElementById('health-search').addEventListener('input', populateHealthTable);
+            
+            // Initialize empty states
+            populateHealthTable();
+        });
+
+        // Section navigation
+        function showSection(sectionId) {
+            const menuItems = document.querySelectorAll('.menu-item');
+            const contentSections = document.querySelectorAll('.content-section');
+            
+            // Update active menu item
+            menuItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-target') === sectionId) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Show selected section
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+                if (section.id === sectionId) {
+                    section.classList.add('active');
+                    
+                    // Update page title
+                    const title = document.querySelector(`[data-target="${sectionId}"] span`).textContent;
+                    document.getElementById('page-title').textContent = title;
+                    document.getElementById('page-subtitle').textContent = 
+                        `University of Eldoret Health Department | ${title}`;
+                    
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('healthDetailModal');
+            if (event.target === modal) {
+                closeHealthModal();
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('health-search').focus();
+            }
+            
+            // Escape to close modal
+            if (e.key === 'Escape') {
+                closeHealthModal();
+            }
+            
+            // Ctrl/Cmd + E to export
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportHealthData();
+            }
+        });
+
+        // Add fadeOut animation
+        const fadeOutStyle = document.createElement('style');
+        fadeOutStyle.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            
+            .empty-state {
+                text-align: center;
+                padding: 40px 20px;
+                color: var(--gray-500);
+            }
+            
+            .empty-state i {
+                font-size: 48px;
+                margin-bottom: 16px;
+                opacity: 0.5;
+            }
+            
+            .empty-state p {
+                font-size: 1.1rem;
+                margin-top: 8px;
+            }
+            
+            .text-muted {
+                color: var(--gray-500) !important;
+                font-size: 0.9rem;
+            }
+        `;
+        document.head.appendChild(fadeOutStyle);
+    </script>
+</body>
+</html>
