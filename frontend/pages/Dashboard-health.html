@@ -1,36 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UoE Safe | Health Department Dashboard</title>
-    
+
     <!-- Font Awesome for Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
+    <!-- Custom CSS for Health Department -->
+    <link rel="stylesheet" href="../Styles/health.css">
+    <!--js link-->
+    <script type="module" src="/Backend/pages/health.js"></script>
     <!-- Chart.js for Data Visualization -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-    <!--CSS LINK-->
-    <link rel="stylesheet" href="/frontend/Styles/health.css">
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    
-    <!-- JS LINK -->
-    <script type="module" src="/Backend/pages/healthDashboard.js"></script>
+
+
 </head>
+
 <body>
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
-        <p>Loading Health Dashboard...</p>
+        <p style="font-size: 1.1rem; color: var(--primary-700); font-weight: 600; margin-top: 20px;">
+            Loading Health Department Dashboard...
+        </p>
     </div>
 
     <!-- Modern Sidebar -->
@@ -39,26 +45,42 @@
             <h2><i class="fas fa-heartbeat"></i> UoE Safe</h2>
             <p>Health Department Dashboard</p>
         </div>
-        
+
         <ul class="sidebar-menu">
             <li class="menu-item active" data-target="dashboard">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard Overview</span>
             </li>
             <li class="menu-item" data-target="health-data">
-                <i class="fas fa-notes-medical"></i> 
+                <i class="fas fa-notes-medical"></i>
                 <span>Health Data Management</span>
+            </li>
+            <li class="menu-item" data-target="mental-health">
+                <i class="fas fa-brain"></i>
+                <span>Mental Health Cases</span>
+            </li>
+            <li class="menu-item" data-target="womens-health">
+                <i class="fas fa-female"></i>
+                <span>Women's Health</span>
+            </li>
+            <li class="menu-item" data-target="emergency-cases">
+                <i class="fas fa-ambulance"></i>
+                <span>Emergency Cases</span>
             </li>
             <li class="menu-item" data-target="analytics">
                 <i class="fas fa-chart-bar"></i>
                 <span>Health Analytics</span>
+            </li>
+            <li class="menu-item" data-target="reports">
+                <i class="fas fa-file-medical-alt"></i>
+                <span>Medical Reports</span>
             </li>
             <li class="menu-item" data-target="system">
                 <i class="fas fa-cog"></i>
                 <span>System Settings</span>
             </li>
         </ul>
-        
+
         <div class="sidebar-footer">
             <div class="user-info">
                 <div class="user-avatar" id="userAvatar">HD</div>
@@ -78,22 +100,57 @@
         <!-- Enhanced Header -->
         <header class="content-header">
             <div class="header-left">
-                <h1 id="page-title">Health Dashboard</h1>
-                <p id="page-subtitle">University of Eldoret Health Department • Real-time Monitoring</p>
+                <h1 id="page-title">Health Dashboard Overview</h1>
+                <p id="page-subtitle">
+                    <i class="fas fa-university"></i> University of Eldoret Health Department •
+                    <i class="fas fa-clock"></i> Real-time Monitoring
+                </p>
             </div>
             <div class="header-right">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search health records..." id="health-search">
+                    <input type="text" placeholder="Search health records, patients..." id="health-search">
                 </div>
-                <div class="notifications" title="View Notifications">
-                    <i class="fas fa-bell notification-bell"></i>
-                    <span class="notification-badge" id="notification-count">3</span>
+                <!-- Notifications System -->
+                <div class="notifications" id="notificationsContainer">
+                    <i class="fas fa-bell notification-bell" id="notificationBell"></i>
+                    <span class="notification-badge" id="notificationCount">0</span>
+
+                    <!-- Notification Panel -->
+                    <div class="notification-panel" id="notificationPanel">
+                        <div class="notification-header">
+                            <h3><i class="fas fa-bell"></i> Notifications</h3>
+                            <div class="notification-actions">
+                                <button class="notification-action-btn" onclick="markAllAsRead()"
+                                    title="Mark all as read">
+                                    <i class="fas fa-check-double"></i>
+                                </button>
+                                <button class="notification-action-btn" onclick="refreshNotifications()"
+                                    title="Refresh">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button class="notification-action-btn" onclick="clearNotifications()"
+                                    title="Clear all">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="notification-list" id="notificationList">
+                            <!-- Dynamic notifications will be loaded here -->
+                        </div>
+
+                        <div class="notification-footer">
+                            <a href="#" class="view-all-notifications" onclick="showAllNotifications()">
+                                View All Notifications <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- Dashboard Section -->
+        <!-- Dashboard Overview Section -->
         <section id="dashboard" class="content-section active">
             <!-- Enhanced Stats Grid -->
             <div class="stats-grid">
@@ -104,10 +161,12 @@
                     <div class="stat-info">
                         <h3 id="total-health-records">0</h3>
                         <p>Total Health Records</p>
-                        <small class="text-muted">Updated in real-time</small>
+                        <small>
+                            <i class="fas fa-sync-alt"></i> Updated in real-time
+                        </small>
                     </div>
                 </div>
-                
+
                 <div class="stat-card">
                     <div class="stat-icon pending">
                         <i class="fas fa-brain"></i>
@@ -115,29 +174,35 @@
                     <div class="stat-info">
                         <h3 id="mental-health-cases">0</h3>
                         <p>Mental Health Cases</p>
-                        <small class="text-muted">Requiring attention</small>
+                        <small>
+                            <i class="fas fa-exclamation-circle"></i> Requiring attention
+                        </small>
                     </div>
                 </div>
-                
+
                 <div class="stat-card">
                     <div class="stat-icon resolved">
                         <i class="fas fa-venus"></i>
                     </div>
                     <div class="stat-info">
                         <h3 id="womens-health">0</h3>
-                        <p>Women's Health</p>
-                        <small class="text-muted">Specialized care needed</small>
+                        <p>Women's Health Cases</p>
+                        <small>
+                            <i class="fas fa-stethoscope"></i> Specialized care needed
+                        </small>
                     </div>
                 </div>
-                
+
                 <div class="stat-card">
                     <div class="stat-icon users">
                         <i class="fas fa-mars"></i>
                     </div>
                     <div class="stat-info">
                         <h3 id="mens-health">0</h3>
-                        <p>Men's Health</p>
-                        <small class="text-muted">Active cases</small>
+                        <p>Men's Health Cases</p>
+                        <small>
+                            <i class="fas fa-user-md"></i> Active cases
+                        </small>
                     </div>
                 </div>
             </div>
@@ -147,19 +212,19 @@
                 <div class="chart-container">
                     <div class="chart-header">
                         <h3><i class="fas fa-chart-pie"></i> Health Concerns Distribution</h3>
-                        <span class="text-muted">Real-time data visualization</span>
+                        <span>Real-time data visualization</span>
                     </div>
                     <canvas id="healthChart"></canvas>
                 </div>
-                
+
                 <div class="chart-container">
                     <div class="chart-header">
                         <h3><i class="fas fa-users"></i> Gender Distribution</h3>
-                        <span class="text-muted">Patient demographics</span>
+                        <span>Patient demographics</span>
                     </div>
                     <canvas id="genderChart"></canvas>
                 </div>
-                
+
                 <div class="recent-activity">
                     <div class="activity-header">
                         <h3><i class="fas fa-history"></i> Recent Health Submissions</h3>
@@ -171,11 +236,11 @@
                         <!-- Dynamic content loaded here -->
                     </div>
                 </div>
-                
+
                 <div class="priority-stats">
                     <div class="priority-header">
                         <h3><i class="fas fa-exclamation-triangle"></i> Top Health Concerns</h3>
-                        <span class="text-muted">Priority areas</span>
+                        <span>Priority areas</span>
                     </div>
                     <div class="priority-list" id="health-concerns-list">
                         <!-- Dynamic content loaded here -->
@@ -184,27 +249,39 @@
             </div>
         </section>
 
-        <!-- Health Data Section -->
-        <section id="health-data" class="content-section">
+        <!-- Health Data Management Section -->
+        <section id="health-data" class="content-section" style="width: fit-content;flex: 1px; padding: 1px;scroll-behavior: smooth;overflow-x: scroll;">
             <div class="section-header">
                 <h2><i class="fas fa-database"></i> Health Data Management</h2>
                 <div class="header-actions">
                     <div class="filters">
-                        <select id="gender-filter">
+                        <select id="gender-filter" class="form-control">
                             <option value="">All Genders</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
+                            <option value="Other">Other</option>
                         </select>
-                        <select id="location-filter">
+                        <select id="location-filter" class="form-control">
                             <option value="">All Locations</option>
                             <option value="Hostel A">Hostel A</option>
                             <option value="Hostel B">Hostel B</option>
-                            <option value="Campus">Main Campus</option>
+                            <option value="Main Campus">Main Campus</option>
                             <option value="Library">Library</option>
+                            <option value="Sports Complex">Sports Complex</option>
+                        </select>
+                        <select id="concern-filter" class="form-control">
+                            <option value="">All Concerns</option>
+                            <option value="mental">Mental Health</option>
+                            <option value="academic">Academic Pressure</option>
+                            <option value="womens">Women's Health</option>
+                            <option value="general">General Health</option>
                         </select>
                     </div>
                     <button class="btn btn-primary" onclick="exportHealthData()">
                         <i class="fas fa-download"></i> Export Data
+                    </button>
+                    <button class="btn btn-secondary" onclick="showAddRecordModal()">
+                        <i class="fas fa-plus"></i> Add Record
                     </button>
                 </div>
             </div>
@@ -213,13 +290,14 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Registration No.</th>
+                            <th>Patient ID</th>
                             <th>Gender</th>
                             <th>Location</th>
                             <th>Main Complaint</th>
                             <th>Mental Health</th>
                             <th>Women's Health</th>
                             <th>Submitted</th>
+                            <th>Priority</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -230,38 +308,220 @@
             </div>
         </section>
 
+        <!-- Mental Health Cases Section -->
+        <section id="mental-health" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-brain"></i> Mental Health Cases Management</h2>
+                <div class="header-actions">
+                    <select id="mental-health-filter" class="form-control">
+                        <option value="all">All Mental Health Issues</option>
+                        <option value="depression">Depression</option>
+                        <option value="stress">Stress/Anxiety</option>
+                        <option value="stigma">Mental Stigma</option>
+                        <option value="sleep">Sleep Issues</option>
+                        <option value="academic">Academic Pressure</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="exportMentalHealthData()">
+                        <i class="fas fa-file-export"></i> Export Mental Health Data
+                    </button>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="chart-container full-width">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-line"></i> Mental Health Trends</h3>
+                        <span>Cases over time</span>
+                    </div>
+                    <canvas id="mentalHealthChart" height="100"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-bar"></i> Issue Distribution</h3>
+                        <span>Type of mental health concerns</span>
+                    </div>
+                    <canvas id="mentalIssuesChart"></canvas>
+                </div>
+
+                <div class="recent-activity">
+                    <div class="activity-header">
+                        <h3><i class="fas fa-user-md"></i> Critical Cases</h3>
+                        <span>Requiring immediate attention</span>
+                    </div>
+                    <div class="activity-list" id="critical-cases-list">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Women's Health Section -->
+        <section id="womens-health" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-female"></i> Women's Health Management</h2>
+                <div class="header-actions">
+                    <select id="womens-health-filter" class="form-control">
+                        <option value="all">All Women's Health Issues</option>
+                        <option value="menstrual">Menstrual Health</option>
+                        <option value="contraception">Contraception</option>
+                        <option value="pregnancy">Pregnancy Concerns</option>
+                        <option value="harassment">Harassment</option>
+                        <option value="safe-space">Safe Space Needs</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="exportWomensHealthData()">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                    <button class="btn btn-accent" onclick="scheduleWorkshop()">
+                        <i class="fas fa-calendar-alt"></i> Schedule Workshop
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #EC407A 0%, #D81B60 100%);">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="menstrual-cases">0</h3>
+                        <p>Menstrual Health Cases</p>
+                        <small><i class="fas fa-heartbeat"></i> Regular monitoring</small>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #AB47BC 0%, #8E24AA 100%);">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="harassment-cases">0</h3>
+                        <p>Harassment Reports</p>
+                        <small><i class="fas fa-exclamation-triangle"></i> Immediate action needed</small>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #5C6BC0 0%, #3949AB 100%);">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="safe-space-cases">0</h3>
+                        <p>Safe Space Requests</p>
+                        <small><i class="fas fa-shield-alt"></i> Confidential support</small>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #26A69A 0%, #00897B 100%);">
+                        <i class="fas fa-baby"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="pregnancy-cases">0</h3>
+                        <p>Pregnancy Concerns</p>
+                        <small><i class="fas fa-hand-holding-heart"></i> Sensitive care</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Emergency Cases Section -->
+        <section id="emergency-cases" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-ambulance"></i> Emergency Cases Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="refreshEmergencyData()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button class="btn btn-error" onclick="triggerEmergencyAlert()">
+                        <i class="fas fa-bell"></i> Emergency Alert
+                    </button>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="chart-container full-width">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-exclamation-circle"></i> Active Emergency Cases</h3>
+                        <span>Real-time monitoring</span>
+                    </div>
+                    <div class="emergency-list" id="emergency-cases-list">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                </div>
+
+                <div class="priority-stats">
+                    <div class="priority-header">
+                        <h3><i class="fas fa-headset"></i> Emergency Contacts</h3>
+                        <span>Immediate response</span>
+                    </div>
+                    <div class="priority-list" id="emergency-contacts">
+                        <div class="priority-item" onclick="callEmergency('0712345678')">
+                            <span class="priority-label">
+                                <i class="fas fa-phone-alt"></i> Campus Emergency
+                            </span>
+                            <span class="priority-count">0712 345 678</span>
+                        </div>
+                        <div class="priority-item" onclick="callEmergency('0723456789')">
+                            <span class="priority-label">
+                                <i class="fas fa-ambulance"></i> Medical Emergency
+                            </span>
+                            <span class="priority-count">0723 456 789</span>
+                        </div>
+                        <div class="priority-item" onclick="callEmergency('0734567890')">
+                            <span class="priority-label">
+                                <i class="fas fa-user-shield"></i> Security
+                            </span>
+                            <span class="priority-count">0734 567 890</span>
+                        </div>
+                        <div class="priority-item" onclick="callEmergency('0745678901')">
+                            <span class="priority-label">
+                                <i class="fas fa-theater-masks"></i> Counseling
+                            </span>
+                            <span class="priority-count">0745 678 901</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Analytics Section -->
         <section id="analytics" class="content-section">
             <div class="section-header">
                 <h2><i class="fas fa-chart-line"></i> Health Analytics & Insights</h2>
-                <div class="date-filter">
-                    <select id="analytics-period">
-                        <option value="7d">Last 7 Days</option>
-                        <option value="30d" selected>Last 30 Days</option>
-                        <option value="90d">Last 90 Days</option>
-                        <option value="1y">Last Year</option>
-                    </select>
+                <div class="header-actions">
+                    <div class="date-filter">
+                        <select id="analytics-period" class="form-control">
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d" selected>Last 30 Days</option>
+                            <option value="90d">Last 90 Days</option>
+                            <option value="1y">Last Year</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateAnalyticsReport()">
+                        <i class="fas fa-file-pdf"></i> Generate Report
+                    </button>
                 </div>
             </div>
             <div class="dashboard-grid">
                 <div class="chart-container full-width">
                     <div class="chart-header">
                         <h3><i class="fas fa-chart-line"></i> Health Trends Over Time</h3>
-                        <span class="text-muted">Weekly progression</span>
+                        <span>Weekly progression analysis</span>
                     </div>
                     <canvas id="trendsChart" height="100"></canvas>
                 </div>
                 <div class="chart-container">
                     <div class="chart-header">
                         <h3><i class="fas fa-map-marker-alt"></i> Location-wise Distribution</h3>
-                        <span class="text-muted">Case locations</span>
+                        <span>Case locations heatmap</span>
                     </div>
                     <canvas id="locationChart"></canvas>
                 </div>
                 <div class="priority-stats">
                     <div class="priority-header">
                         <h3><i class="fas fa-chart-bar"></i> Key Health Metrics</h3>
-                        <span class="text-muted">Performance indicators</span>
+                        <span>Performance indicators</span>
                     </div>
                     <div class="priority-list" id="health-metrics-list">
                         <!-- Dynamic content loaded here -->
@@ -270,14 +530,54 @@
             </div>
         </section>
 
-        <!-- Settings Section -->
-        <section id="system" class="content-section">
+        <!-- Medical Reports Section -->
+        <section id="reports" class="content-section">
             <div class="section-header">
-                <h2><i class="fas fa-sliders-h"></i> Health Department Settings</h2>
+                <h2><i class="fas fa-file-medical-alt"></i> Medical Reports & Documentation</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="generateMonthlyReport()">
+                        <i class="fas fa-file-medical"></i> Monthly Report
+                    </button>
+                    <button class="btn btn-secondary" onclick="generateStatisticsReport()">
+                        <i class="fas fa-chart-pie"></i> Statistics Report
+                    </button>
+                </div>
             </div>
             <div class="dashboard-grid">
                 <div class="chart-container">
-                    <h3><i class="fas fa-tags"></i> Health Categories</h3>
+                    <div class="chart-header">
+                        <h3><i class="fas fa-file-pdf"></i> Available Reports</h3>
+                        <span>Download medical reports</span>
+                    </div>
+                    <div class="reports-list" id="reports-list">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-calendar-check"></i> Scheduled Reports</h3>
+                        <span>Upcoming report generation</span>
+                    </div>
+                    <div class="scheduled-reports" id="scheduled-reports">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Settings Section -->
+        <section id="system" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-sliders-h"></i> Health Department Settings</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="saveSettings()">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                </div>
+            </div>
+            <div class="dashboard-grid">
+                <div class="chart-container">
+                    <h3><i class="fas fa-tags"></i> Health Categories Management</h3>
                     <div class="categories-list" id="health-categories-settings">
                         <!-- Dynamic content loaded here -->
                     </div>
@@ -286,36 +586,53 @@
                     <h3><i class="fas fa-cogs"></i> System Configuration</h3>
                     <div class="config-options">
                         <label class="config-switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="real-time-alerts" checked>
                             <span class="slider"></span>
                             <span>Real-time Health Alerts</span>
                         </label>
                         <label class="config-switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="auto-backup" checked>
                             <span class="slider"></span>
                             <span>Automated Data Backup</span>
                         </label>
                         <label class="config-switch">
-                            <input type="checkbox">
+                            <input type="checkbox" id="maintenance-mode">
                             <span class="slider"></span>
                             <span>Maintenance Mode</span>
                         </label>
                         <label class="config-switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="privacy-protection" checked>
                             <span class="slider"></span>
                             <span>Privacy Protection</span>
                         </label>
+                        <label class="config-switch">
+                            <input type="checkbox" id="email-notifications" checked>
+                            <span class="slider"></span>
+                            <span>Email Notifications</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="fas fa-user-shield"></i> User Management</h3>
+                    <div class="user-management" id="user-management">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="fas fa-bell"></i> Notification Settings</h3>
+                    <div class="notification-settings" id="notification-settings">
+                        <!-- Dynamic content loaded here -->
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Enhanced Modal -->
+    <!-- Enhanced Modal for Health Details -->
     <div id="healthDetailModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modal-title">Health Record Details</h3>
+                <h3 id="modal-title"><i class="fas fa-file-medical-alt"></i> Health Record Details</h3>
                 <span class="close" onclick="closeHealthModal()">&times;</span>
             </div>
             <div class="modal-body" id="modal-body">
@@ -328,899 +645,125 @@
                 <button class="btn btn-primary" onclick="printRecord()">
                     <i class="fas fa-print"></i> Print Record
                 </button>
+                <button class="btn btn-accent" onclick="exportSingleRecord()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Record Modal -->
+    <div id="addRecordModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> Add New Health Record</h3>
+                <span class="close" onclick="closeAddRecordModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addRecordForm" onsubmit="submitNewRecord(event)">
+                    <div class="health-details-grid">
+                        <div class="detail-item">
+                            <label><i class="fas fa-id-card"></i> Patient ID</label>
+                            <input type="text" id="new-patient-id" class="form-control" placeholder="Enter patient ID"
+                                required>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-user"></i> Full Name</label>
+                            <input type="text" id="new-patient-name" class="form-control" placeholder="Enter full name"
+                                required>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-venus-mars"></i> Gender</label>
+                            <select id="new-patient-gender" class="form-control" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-calendar-alt"></i> Age</label>
+                            <input type="number" id="new-patient-age" class="form-control" placeholder="Enter age"
+                                min="1" max="100" required>
+                        </div>
+                        <div class="detail-item full-width">
+                            <label><i class="fas fa-map-marker-alt"></i> Location</label>
+                            <select id="new-patient-location" class="form-control" required>
+                                <option value="">Select Location</option>
+                                <option value="Hostel A">Hostel A</option>
+                                <option value="Hostel B">Hostel B</option>
+                                <option value="Main Campus">Main Campus</option>
+                                <option value="Library">Library</option>
+                                <option value="Sports Complex">Sports Complex</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="detail-item full-width">
+                            <label><i class="fas fa-comment-medical"></i> Main Complaint</label>
+                            <textarea id="new-main-complaint" class="form-control"
+                                placeholder="Describe the main complaint..." rows="3" required></textarea>
+                        </div>
+                        <div class="detail-item full-width">
+                            <label><i class="fas fa-stethoscope"></i> Health Issues (Select all that apply)</label>
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 12px;">
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="new-stress" value="stress">
+                                    <span>Stress/Anxiety</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="new-depression" value="depression">
+                                    <span>Depression</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="new-sleep-issues" value="sleepIssues">
+                                    <span>Sleep Issues</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="new-academic-pressure" value="academicPressure">
+                                    <span>Academic Pressure</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="new-flu" value="flu">
+                                    <span>Flu/Common Cold</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="new-stomach-issues" value="stomachIssues">
+                                    <span>Stomach Issues</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="detail-item full-width">
+                            <label><i class="fas fa-first-aid"></i> Additional Notes</label>
+                            <textarea id="new-additional-notes" class="form-control"
+                                placeholder="Any additional notes or observations..." rows="2"></textarea>
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-phone-alt"></i> Contact Number</label>
+                            <input type="tel" id="new-contact-number" class="form-control" placeholder="0712 345 678">
+                        </div>
+                        <div class="detail-item">
+                            <label><i class="fas fa-envelope"></i> Email</label>
+                            <input type="email" id="new-email" class="form-control" placeholder="patient@example.com">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddRecordModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn btn-primary" type="submit" form="addRecordForm">
+                    <i class="fas fa-save"></i> Save Record
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Firebase Config -->
     <script src="../../../Backend/Firebase/firebaseConfig.js"></script>
-    
-    <!-- Enhanced JavaScript -->
-    <script>
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        let healthData = [];
-        let healthReportsListener = null;
-        let chartInstances = {};
-
-        // Hide loading overlay
-        function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.style.opacity = '0';
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 500);
-        }
-
-        // Show toast notification
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(toast);
-
-            // Animate in
-            setTimeout(() => {
-                toast.style.transform = 'translateX(0)';
-            }, 50);
-
-            // Remove toast after 4 seconds
-            setTimeout(() => {
-                toast.style.transform = 'translateX(120%)';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        document.body.removeChild(toast);
-                    }
-                }, 400);
-            }, 4000);
-        }
-
-        // Update user avatar with initials
-        function updateUserAvatar(email) {
-            const avatar = document.getElementById('userAvatar');
-            const name = email.split('@')[0];
-            const initials = name.substring(0, 2).toUpperCase();
-            avatar.textContent = initials;
-        }
-
-        // Authentication check with enhanced loading
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                window.location.href = '../../../index.html';
-                return;
-            }
-            
-            try {
-                // Verify this is a health department user
-                const userDoc = await db.collection('adminUsers').doc(user.uid).get();
-                if (!userDoc.exists || !userDoc.data().departments.includes('health')) {
-                    showToast('Access denied. Health department access required.', 'error');
-                    setTimeout(() => {
-                        auth.signOut();
-                        window.location.href = '../../../index.html';
-                    }, 2000);
-                    return;
-                }
-                
-                // User is authenticated and has access
-                document.getElementById('sidebar-user-name').textContent = user.email;
-                updateUserAvatar(user.email);
-                
-                // Set page title with user info
-                document.title = `UoE Safe | ${user.email.split('@')[0]} - Health Dashboard`;
-                
-                // Load dashboard data
-                setupRealTimeListener();
-                
-                // Hide loading overlay
-                setTimeout(hideLoading, 1000);
-                
-                showToast('Welcome to Health Department Dashboard', 'success');
-                
-            } catch (error) {
-                console.error('Auth error:', error);
-                showToast('Authentication error. Please try again.', 'error');
-            }
-        });
-
-        // Logout function
-        function logout() {
-            showToast('Logging out...', 'info');
-            setTimeout(() => {
-                auth.signOut().then(() => {
-                    window.location.href = '../../../index.html';
-                });
-            }, 1000);
-        }
-
-        // Real-time data listener
-        function setupRealTimeListener() {
-            if (healthReportsListener) {
-                healthReportsListener();
-            }
-            
-            console.log('Setting up real-time health data listener...');
-            healthReportsListener = db.collection('health').orderBy('submissionTimestamp', 'desc')
-                .onSnapshot((querySnapshot) => {
-                    healthData = [];
-                    querySnapshot.forEach((doc) => {
-                        healthData.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
-                    });
-
-                    console.log(`Loaded ${healthData.length} health records`);
-                    
-                    // Update all dashboard components
-                    updateDashboardStats();
-                    initializeHealthCharts();
-                    loadRecentHealthSubmissions();
-                    loadHealthConcerns();
-                    populateHealthTable();
-                    updateSettingsCategories();
-                    
-                }, (error) => {
-                    console.error('Error loading health data:', error);
-                    showToast('Error loading health data', 'error');
-                });
-        }
-
-        // Update dashboard statistics with animation
-        function updateDashboardStats() {
-            const totalRecords = healthData.length;
-            const mentalHealthCases = healthData.filter(record => 
-                record.depression || record.stress || record.mentalStigma || record.academicPressure
-            ).length;
-            const womensHealth = healthData.filter(record => 
-                record.gender === 'Female' && (
-                    record.contraception || record.irregularPeriods || record.menstrualPain || 
-                    record.pregnancyConcerns || record.sanitaryAccess || record.harassment || record.needSafeSpace
-                )
-            ).length;
-            const mensHealth = healthData.filter(record => 
-                record.gender === 'Male' && (record.sexualHealthMale || record.sportsInjury)
-            ).length;
-
-            // Animate number counting
-            animateCounter('total-health-records', totalRecords);
-            animateCounter('mental-health-cases', mentalHealthCases);
-            animateCounter('womens-health', womensHealth);
-            animateCounter('mens-health', mensHealth);
-        }
-
-        // Animate number counter
-        function animateCounter(elementId, finalValue, duration = 1000) {
-            const element = document.getElementById(elementId);
-            const startValue = parseInt(element.textContent) || 0;
-            const increment = finalValue > startValue ? 1 : -1;
-            const stepTime = Math.abs(Math.floor(duration / (finalValue - startValue)));
-            
-            let current = startValue;
-            const timer = setInterval(() => {
-                current += increment;
-                element.textContent = current;
-                if (current === finalValue) {
-                    clearInterval(timer);
-                }
-            }, stepTime);
-        }
-
-        // Initialize enhanced charts
-        function initializeHealthCharts() {
-            // Health Concerns Distribution Chart
-            const healthCtx = document.getElementById('healthChart').getContext('2d');
-            const healthConcerns = {
-                'Mental Health': healthData.filter(r => r.depression || r.stress || r.mentalStigma).length,
-                'Academic Pressure': healthData.filter(r => r.academicPressure).length,
-                'Sleep Issues': healthData.filter(r => r.sleepIssues).length,
-                'Physical Health': healthData.filter(r => r.flu || r.stomachIssues || r.sportsInjury).length,
-                'Women\'s Health': healthData.filter(r => r.contraception || r.irregularPeriods || r.menstrualPain).length
-            };
-            
-            if (chartInstances.healthChart) {
-                chartInstances.healthChart.destroy();
-            }
-            
-            chartInstances.healthChart = new Chart(healthCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(healthConcerns),
-                    datasets: [{
-                        data: Object.values(healthConcerns),
-                        backgroundColor: [
-                            'rgba(156, 39, 176, 0.8)',
-                            'rgba(33, 150, 243, 0.8)',
-                            'rgba(255, 193, 7, 0.8)',
-                            'rgba(76, 175, 80, 0.8)',
-                            'rgba(233, 30, 99, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgb(156, 39, 176)',
-                            'rgb(33, 150, 243)',
-                            'rgb(255, 193, 7)',
-                            'rgb(76, 175, 80)',
-                            'rgb(233, 30, 99)'
-                        ],
-                        borderWidth: 2,
-                        hoverOffset: 15
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                            titleFont: {
-                                size: 14
-                            },
-                            bodyFont: {
-                                size: 13
-                            }
-                        }
-                    },
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true
-                    }
-                }
-            });
-
-            // Gender Distribution Chart
-            const genderCtx = document.getElementById('genderChart').getContext('2d');
-            const genderCounts = {
-                'Male': healthData.filter(r => r.gender === 'Male').length,
-                'Female': healthData.filter(r => r.gender === 'Female').length,
-                'Other': healthData.filter(r => r.gender !== 'Male' && r.gender !== 'Female').length
-            };
-            
-            if (chartInstances.genderChart) {
-                chartInstances.genderChart.destroy();
-            }
-            
-            chartInstances.genderChart = new Chart(genderCtx, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(genderCounts),
-                    datasets: [{
-                        data: Object.values(genderCounts),
-                        backgroundColor: [
-                            'rgba(0, 137, 123, 0.8)',
-                            'rgba(233, 30, 99, 0.8)',
-                            'rgba(117, 117, 117, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgb(0, 137, 123)',
-                            'rgb(233, 30, 99)',
-                            'rgb(117, 117, 117)'
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Load recent health submissions with enhanced design
-        function loadRecentHealthSubmissions() {
-            const recentSubmissions = healthData.slice(0, 6);
-            const activityList = document.getElementById('recent-health-list');
-            
-            if (recentSubmissions.length === 0) {
-                activityList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>No recent submissions</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            activityList.innerHTML = recentSubmissions.map((record, index) => `
-                <div class="activity-item" style="animation-delay: ${index * 0.1}s">
-                    <div class="activity-icon health">
-                        <i class="fas fa-user-md"></i>
-                    </div>
-                    <div class="activity-content">
-                        <p class="activity-desc">
-                            <strong>${record.registrationNumber || 'Unknown'}</strong> - 
-                            ${record.mainComplaint ? record.mainComplaint.substring(0, 40) + '...' : 'Health concern'}
-                        </p>
-                        <span class="activity-time">
-                            <i class="far fa-clock"></i>
-                            ${formatTimestamp(record.submissionTimestamp)} • 
-                            <i class="fas fa-map-marker-alt"></i>
-                            ${record.location || 'Unknown location'}
-                        </span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Load health concerns with priority indicators
-        function loadHealthConcerns() {
-            const concerns = [
-                { name: 'Stress/Anxiety', count: healthData.filter(r => r.stress).length, icon: 'fas fa-brain' },
-                { name: 'Depression', count: healthData.filter(r => r.depression).length, icon: 'fas fa-sad-tear' },
-                { name: 'Sleep Issues', count: healthData.filter(r => r.sleepIssues).length, icon: 'fas fa-bed' },
-                { name: 'Academic Pressure', count: healthData.filter(r => r.academicPressure).length, icon: 'fas fa-graduation-cap' },
-                { name: 'Sanitary Access', count: healthData.filter(r => r.sanitaryAccess).length, icon: 'fas fa-female' },
-                { name: 'Harassment', count: healthData.filter(r => r.harassment).length, icon: 'fas fa-exclamation-triangle' }
-            ].filter(concern => concern.count > 0).sort((a,b) => b.count - a.count);
-
-            const concernsList = document.getElementById('health-concerns-list');
-            
-            if (concerns.length === 0) {
-                concernsList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-check-circle"></i>
-                        <p>No major concerns reported</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            concernsList.innerHTML = concerns.map(concern => `
-                <div class="priority-item">
-                    <span class="priority-label">
-                        <i class="${concern.icon}"></i>
-                        ${concern.name}
-                    </span>
-                    <span class="priority-count">${concern.count}</span>
-                </div>
-            `).join('');
-        }
-
-        // Update settings categories
-        function updateSettingsCategories() {
-            const concerns = [
-                { name: 'Mental Health', count: healthData.filter(r => r.depression || r.stress || r.mentalStigma).length, color: 'var(--accent-500)' },
-                { name: 'Women\'s Health', count: healthData.filter(r => r.contraception || r.irregularPeriods || r.menstrualPain).length, color: 'var(--accent-600)' },
-                { name: 'General Health', count: healthData.filter(r => r.flu || r.stomachIssues || r.sportsInjury).length, color: 'var(--primary-500)' },
-                { name: 'Academic Health', count: healthData.filter(r => r.academicPressure).length, color: 'var(--info)' }
-            ];
-            
-            const categoriesList = document.getElementById('health-categories-settings');
-            categoriesList.innerHTML = concerns.map(c => `
-                <div class="priority-item">
-                    <span class="priority-label">
-                        <i class="fas fa-circle" style="color: ${c.color}"></i>
-                        ${c.name}
-                    </span>
-                    <span class="priority-count" style="background: ${c.color}20; color: ${c.color}">
-                        ${c.count} cases
-                    </span>
-                </div>
-            `).join('');
-        }
-
-        // Populate health table with enhanced design
-        function populateHealthTable() {
-            const tableBody = document.getElementById('health-table-body');
-            const genderFilter = document.getElementById('gender-filter').value;
-            const locationFilter = document.getElementById('location-filter').value;
-            const searchTerm = document.getElementById('health-search').value.toLowerCase();
-            
-            let filteredData = healthData.filter(record => {
-                const matchesGender = !genderFilter || record.gender === genderFilter;
-                const matchesLocation = !locationFilter || record.location === locationFilter;
-                const matchesSearch = !searchTerm || 
-                    (record.registrationNumber && record.registrationNumber.toLowerCase().includes(searchTerm)) ||
-                    (record.email && record.email.toLowerCase().includes(searchTerm)) ||
-                    (record.mainComplaint && record.mainComplaint.toLowerCase().includes(searchTerm));
-                
-                return matchesGender && matchesLocation && matchesSearch;
-            });
-            
-            if (filteredData.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="8" style="text-align: center; padding: 40px;">
-                            <i class="fas fa-search" style="font-size: 48px; color: var(--gray-300); margin-bottom: 16px;"></i>
-                            <p style="color: var(--gray-500); font-size: 1.1rem;">No matching records found</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tableBody.innerHTML = filteredData.map((record, index) => `
-                <tr style="animation-delay: ${index * 0.05}s">
-                    <td>
-                        <div style="font-weight: 600; color: var(--primary-700);">${record.registrationNumber || 'N/A'}</div>
-                        <small style="color: var(--gray-500);">${record.email || ''}</small>
-                    </td>
-                    <td>
-                        <span class="gender-badge ${record.gender === 'Male' ? 'male' : 'female'}">
-                            <i class="fas fa-${record.gender === 'Male' ? 'mars' : 'venus'}"></i>
-                            ${record.gender || 'N/A'}
-                        </span>
-                    </td>
-                    <td>
-                        <i class="fas fa-map-marker-alt" style="color: var(--gray-500); margin-right: 8px;"></i>
-                        ${record.location || 'N/A'}
-                    </td>
-                    <td title="${record.mainComplaint || ''}">
-                        ${(record.mainComplaint || 'N/A').substring(0, 30)}...
-                    </td>
-                    <td>
-                        ${(record.depression || record.stress || record.mentalStigma) ? 
-                            '<span class="badge badge-warning">Yes</span>' : 
-                            '<span class="badge badge-secondary">No</span>'}
-                    </td>
-                    <td>
-                        ${(record.contraception || record.irregularPeriods || record.menstrualPain) ? 
-                            '<span class="badge badge-accent">Yes</span>' : 
-                            '<span class="badge badge-secondary">No</span>'}
-                    </td>
-                    <td>
-                        <div style="font-size: 0.9rem;">${formatTimestamp(record.submissionTimestamp)}</div>
-                        <small style="color: var(--gray-500);">${formatRelativeTime(record.submissionTimestamp)}</small>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="viewHealthDetails('${record.id}')" style="padding: 6px 12px;">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                        <button class="btn btn-sm btn-secondary" onclick="exportSingleRecord('${record.id}')" style="padding: 6px 12px;">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-            
-            // Add CSS for badges
-            const style = document.createElement('style');
-            style.textContent = `
-                .gender-badge {
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    font-size: 0.85rem;
-                    font-weight: 500;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                }
-                .gender-badge.male {
-                    background: var(--primary-50);
-                    color: var(--primary-700);
-                }
-                .gender-badge.female {
-                    background: var(--accent-50);
-                    color: var(--accent-700);
-                }
-                .badge {
-                    padding: 4px 10px;
-                    border-radius: 6px;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                }
-                .badge-warning {
-                    background: #FFF3E0;
-                    color: #EF6C00;
-                }
-                .badge-accent {
-                    background: var(--accent-50);
-                    color: var(--accent-700);
-                }
-                .badge-secondary {
-                    background: var(--gray-100);
-                    color: var(--gray-600);
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        // Enhanced timestamp formatting
-        function formatTimestamp(timestamp) {
-            if (!timestamp) return 'N/A';
-            
-            let date;
-            if (timestamp.toDate) {
-                date = timestamp.toDate();
-            } else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-                date = new Date(timestamp);
-            } else {
-                return 'Invalid Date';
-            }
-            
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        // Relative time formatting
-        function formatRelativeTime(timestamp) {
-            if (!timestamp) return '';
-            
-            let date;
-            if (timestamp.toDate) {
-                date = timestamp.toDate();
-            } else {
-                date = new Date(timestamp);
-            }
-            
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
-            
-            if (diffMins < 60) return `${diffMins}m ago`;
-            if (diffHours < 24) return `${diffHours}h ago`;
-            if (diffDays < 7) return `${diffDays}d ago`;
-            return `${Math.floor(diffDays / 7)}w ago`;
-        }
-
-        // Enhanced view health details modal
-        function viewHealthDetails(recordId) {
-            const record = healthData.find(r => r.id === recordId);
-            if (!record) return;
-
-            const modal = document.getElementById('healthDetailModal');
-            const modalBody = modal.querySelector('#modal-body');
-            const modalTitle = modal.querySelector('#modal-title');
-            
-            modalTitle.textContent = `Health Record: ${record.registrationNumber || 'Unknown'}`;
-            
-            // Build detailed view
-            let detailsHTML = '<div class="health-details-grid">';
-            
-            // Personal Information
-            detailsHTML += `
-                <div class="detail-item full-width">
-                    <h4 style="color: var(--primary-700); margin-bottom: 16px;">
-                        <i class="fas fa-user-circle"></i> Personal Information
-                    </h4>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-id-card"></i> Registration Number</label>
-                    <span>${record.registrationNumber || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-envelope"></i> Email</label>
-                    <span>${record.email || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-venus-mars"></i> Gender</label>
-                    <span>
-                        <i class="fas fa-${record.gender === 'Male' ? 'mars' : 'venus'}" 
-                           style="color: ${record.gender === 'Male' ? 'var(--primary-600)' : 'var(--accent-600)'}; margin-right: 8px;"></i>
-                        ${record.gender || 'N/A'}
-                    </span>
-                </div>
-                <div class="detail-item">
-                    <label><i class="fas fa-map-marker-alt"></i> Location</label>
-                    <span>${record.location || 'N/A'}</span>
-                </div>
-            `;
-            
-            // Main Complaint
-            detailsHTML += `
-                <div class="detail-item full-width">
-                    <label><i class="fas fa-comment-medical"></i> Main Complaint</label>
-                    <div style="background: var(--gray-50); padding: 16px; border-radius: var(--border-radius-sm); margin-top: 8px;">
-                        <p style="color: var(--gray-800); line-height: 1.6; white-space: pre-wrap;">${record.mainComplaint || 'No complaint specified'}</p>
-                    </div>
-                </div>
-            `;
-            
-            // General Health Issues
-            const generalIssues = [];
-            if (record.stress) generalIssues.push('Stress/Anxiety');
-            if (record.depression) generalIssues.push('Depression');
-            if (record.sleepIssues) generalIssues.push('Sleep Issues');
-            if (record.academicPressure) generalIssues.push('Academic Pressure');
-            if (record.flu) generalIssues.push('Flu/Common Cold');
-            if (record.stomachIssues) generalIssues.push('Stomach Issues');
-            
-            if (generalIssues.length > 0) {
-                detailsHTML += `
-                    <div class="detail-item full-width">
-                        <label><i class="fas fa-stethoscope"></i> General Health Issues</label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                            ${generalIssues.map(issue => `
-                                <span style="background: var(--primary-50); color: var(--primary-700); padding: 6px 12px; border-radius: var(--border-radius-sm); font-size: 0.9rem;">
-                                    <i class="fas fa-check-circle" style="margin-right: 6px;"></i>${issue}
-                                </span>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-            
-            // Gender-specific issues
-            if (record.gender === 'Female') {
-                const womensIssues = [];
-                if (record.menstrualPain) womensIssues.push('Menstrual Pain');
-                if (record.irregularPeriods) womensIssues.push('Irregular Periods');
-                if (record.sanitaryAccess) womensIssues.push('Sanitary Access');
-                if (record.contraception) womensIssues.push('Contraception');
-                if (record.stiConcerns) womensIssues.push('STI Concerns');
-                if (record.pregnancyConcerns) womensIssues.push('Pregnancy Concerns');
-                if (record.harassment) womensIssues.push('Harassment');
-                if (record.needSafeSpace) womensIssues.push('Needs Safe Space');
-                
-                if (womensIssues.length > 0) {
-                    detailsHTML += `
-                        <div class="detail-item full-width">
-                            <label><i class="fas fa-venus"></i> Women's Health Issues</label>
-                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                                ${womensIssues.map(issue => `
-                                    <span style="background: var(--accent-50); color: var(--accent-700); padding: 6px 12px; border-radius: var(--border-radius-sm); font-size: 0.9rem;">
-                                        <i class="fas fa-female" style="margin-right: 6px;"></i>${issue}
-                                    </span>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-            
-            if (record.gender === 'Male') {
-                const mensIssues = [];
-                if (record.mentalStigma) mensIssues.push('Mental Health Stigma');
-                if (record.sportsInjury) mensIssues.push('Sports Injury');
-                if (record.sexualHealthMale) mensIssues.push('Sexual Health');
-                
-                if (mensIssues.length > 0) {
-                    detailsHTML += `
-                        <div class="detail-item full-width">
-                            <label><i class="fas fa-mars"></i> Men's Health Issues</label>
-                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                                ${mensIssues.map(issue => `
-                                    <span style="background: var(--primary-50); color: var(--primary-700); padding: 6px 12px; border-radius: var(--border-radius-sm); font-size: 0.9rem;">
-                                        <i class="fas fa-male" style="margin-right: 6px;"></i>${issue}
-                                    </span>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-            
-            // Submission Information
-            detailsHTML += `
-                <div class="detail-item full-width">
-                    <label><i class="fas fa-calendar-check"></i> Submission Details</label>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 8px;">
-                        <div>
-                            <small style="color: var(--gray-600);">Submitted</small>
-                            <div>${formatTimestamp(record.submissionTimestamp)}</div>
-                        </div>
-                        <div>
-                            <small style="color: var(--gray-600);">Time Since</small>
-                            <div>${formatRelativeTime(record.submissionTimestamp)}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            detailsHTML += '</div>';
-            modalBody.innerHTML = detailsHTML;
-            modal.style.display = 'flex';
-            
-            // Add modal animations
-            modal.style.animation = 'fadeIn 0.3s ease';
-            modal.querySelector('.modal-content').style.animation = 'modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-        }
-
-        // Close modal
-        function closeHealthModal() {
-            const modal = document.getElementById('healthDetailModal');
-            modal.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-
-        // Export health data
-        function exportHealthData() {
-            if (healthData.length === 0) {
-                showToast('No data to export', 'error');
-                return;
-            }
-            
-            const headers = ['Registration', 'Email', 'Gender', 'Location', 'Main Complaint', 'Stress', 'Depression', 'Sleep Issues', 'Academic Pressure', 'Submitted'];
-            const csvData = healthData.map(record => [
-                record.registrationNumber || '',
-                record.email || '',
-                record.gender || '',
-                record.location || '',
-                (record.mainComplaint || '').replace(/,/g, ';'),
-                record.stress ? 'Yes' : 'No',
-                record.depression ? 'Yes' : 'No',
-                record.sleepIssues ? 'Yes' : 'No',
-                record.academicPressure ? 'Yes' : 'No',
-                formatTimestamp(record.submissionTimestamp)
-            ]);
-            
-            const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `health-data-${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            
-            showToast(`Exported ${healthData.length} records successfully`, 'success');
-        }
-
-        // Export single record
-        function exportSingleRecord(recordId) {
-            const record = healthData.find(r => r.id === recordId);
-            if (!record) return;
-            
-            const data = {
-                'Registration Number': record.registrationNumber || 'N/A',
-                'Email': record.email || 'N/A',
-                'Gender': record.gender || 'N/A',
-                'Location': record.location || 'N/A',
-                'Main Complaint': record.mainComplaint || 'N/A',
-                'Stress/Anxiety': record.stress ? 'Yes' : 'No',
-                'Depression': record.depression ? 'Yes' : 'No',
-                'Sleep Issues': record.sleepIssues ? 'Yes' : 'No',
-                'Academic Pressure': record.academicPressure ? 'Yes' : 'No',
-                'Submitted': formatTimestamp(record.submissionTimestamp)
-            };
-            
-            const text = Object.entries(data).map(([key, value]) => `${key}: ${value}`).join('\n');
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `health-record-${record.registrationNumber || 'unknown'}.txt`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            
-            showToast('Record exported successfully', 'success');
-        }
-
-        // Print record
-        function printRecord() {
-            window.print();
-        }
-
-        // Navigation functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuItems = document.querySelectorAll('.menu-item');
-            
-            menuItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    const target = this.getAttribute('data-target');
-                    showSection(target);
-                });
-            });
-
-            // Add filter and search listeners
-            document.getElementById('gender-filter').addEventListener('change', populateHealthTable);
-            document.getElementById('location-filter').addEventListener('change', populateHealthTable);
-            document.getElementById('health-search').addEventListener('input', populateHealthTable);
-            
-            // Initialize empty states
-            populateHealthTable();
-        });
-
-        // Section navigation
-        function showSection(sectionId) {
-            const menuItems = document.querySelectorAll('.menu-item');
-            const contentSections = document.querySelectorAll('.content-section');
-            
-            // Update active menu item
-            menuItems.forEach(item => {
-                item.classList.remove('active');
-                if (item.getAttribute('data-target') === sectionId) {
-                    item.classList.add('active');
-                }
-            });
-            
-            // Show selected section
-            contentSections.forEach(section => {
-                section.classList.remove('active');
-                if (section.id === sectionId) {
-                    section.classList.add('active');
-                    
-                    // Update page title
-                    const title = document.querySelector(`[data-target="${sectionId}"] span`).textContent;
-                    document.getElementById('page-title').textContent = title;
-                    document.getElementById('page-subtitle').textContent = 
-                        `University of Eldoret Health Department | ${title}`;
-                    
-                    // Scroll to top
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            });
-        }
-
-        // Close modals when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('healthDetailModal');
-            if (event.target === modal) {
-                closeHealthModal();
-            }
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Ctrl/Cmd + K for search
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                document.getElementById('health-search').focus();
-            }
-            
-            // Escape to close modal
-            if (e.key === 'Escape') {
-                closeHealthModal();
-            }
-            
-            // Ctrl/Cmd + E to export
-            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-                e.preventDefault();
-                exportHealthData();
-            }
-        });
-
-        // Add fadeOut animation
-        const fadeOutStyle = document.createElement('style');
-        fadeOutStyle.textContent = `
-            @keyframes fadeOut {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
-            
-            .empty-state {
-                text-align: center;
-                padding: 40px 20px;
-                color: var(--gray-500);
-            }
-            
-            .empty-state i {
-                font-size: 48px;
-                margin-bottom: 16px;
-                opacity: 0.5;
-            }
-            
-            .empty-state p {
-                font-size: 1.1rem;
-                margin-top: 8px;
-            }
-            
-            .text-muted {
-                color: var(--gray-500) !important;
-                font-size: 0.9rem;
-            }
-        `;
-        document.head.appendChild(fadeOutStyle);
-    </script>
+    <!---// ============================================
+        // UOE SAFE - HEALTH DEPARTMENT DASHBOARD-->
 </body>
+
 </html>
