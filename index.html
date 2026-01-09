@@ -6,427 +6,31 @@
     <title>UOE Safe App - Admin Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="/frontend/assets/uoe.jpg" type="image/x-icon">
-    
+    <!--css links-->
+    <link rel="stylesheet" href="/frontend/Styles/index.css">
+    <!--js links-->
+    <script type="module" src="/Backend/pages/index.js"></script>
     <!-- Include Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
-    <style>
-        :root {
-            --primary-blue: #1a5fb4;
-            --primary-blue-dark: #0d4a8f;
-            --secondary-green: #2ec27e;
-            --secondary-orange: #ff7800;
-            --secondary-red: #e01b24;
-            --secondary-purple: #9141ac;
-            --secondary-yellow: #f5c211;
-            --secondary-cyan: #17a2b8;
-            --light-gray: #f8f9fa;
-            --medium-gray: #e9ecef;
-            --dark-gray: #343a40;
-            --text-color: #333;
-            --text-light: #6c757d;
-            --white: #ffffff;
-            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            --shadow-hover: 0 15px 35px rgba(0, 0, 0, 0.12);
-            --radius: 12px;
-            --transition: all 0.3s ease;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
-            color: var(--text-color);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 20px;
-            width: 100%;
-        }
-        
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .logo-icon {
-            font-size: 2.8rem;
-            color: var(--primary-blue);
-            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        h1 {
-            font-size: 2.8rem;
-            background: linear-gradient(90deg, var(--primary-blue), var(--secondary-green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            font-weight: 800;
-        }
-        
-        .tagline {
-            font-size: 1.2rem;
-            color: var(--text-light);
-            max-width: 700px;
-            margin: 0 auto 20px;
-            line-height: 1.6;
-        }
-        
-        .card-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-            width: 100%;
-        }
-        
-        @media (min-width: 992px) {
-            .card-container {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-        
-        .card {
-            background: var(--white);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            transition: var(--transition);
-        }
-        
-        .card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--shadow-hover);
-        }
-        
-        .card-header {
-            padding: 25px 30px 20px;
-            border-bottom: 1px solid var(--medium-gray);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .card-header h2 {
-            font-size: 1.8rem;
-            color: var(--primary-blue);
-            font-weight: 700;
-        }
-        
-        .card-body {
-            padding: 30px;
-        }
-        
-        /* Department Selector Styles */
-        .department-selector {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        @media (min-width: 768px) {
-            .department-selector {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        
-        .department-btn {
-            padding: 16px 12px;
-            background: var(--light-gray);
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 600;
-            color: var(--text-color);
-            border: 2px solid transparent;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .department-btn i {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-        
-        .department-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        }
-        
-        .department-btn.active {
-            border-color: var(--primary-blue);
-            background: rgba(26, 95, 180, 0.05);
-            color: var(--primary-blue);
-        }
-        
-        /* Department-specific colors */
-        .department-btn[data-department="health"] i { color: var(--secondary-red); }
-        .department-btn[data-department="outreach"] i { color: var(--secondary-green); }
-        .department-btn[data-department="deans"] i { color: var(--primary-blue); }
-        .department-btn[data-department="estate"] i { color: var(--secondary-orange); }
-        .department-btn[data-department="security"] i { color: var(--secondary-purple); }
-        
-        .department-btn.active[data-department="health"] {
-            border-color: var(--secondary-red);
-            background: rgba(224, 27, 36, 0.05);
-        }
-        
-        .department-btn.active[data-department="outreach"] {
-            border-color: var(--secondary-green);
-            background: rgba(46, 194, 126, 0.05);
-        }
-        
-        .department-btn.active[data-department="deans"] {
-            border-color: var(--primary-blue);
-            background: rgba(26, 95, 180, 0.05);
-        }
-        
-        .department-btn.active[data-department="estate"] {
-            border-color: var(--secondary-orange);
-            background: rgba(255, 120, 0, 0.05);
-        }
-        
-        .department-btn.active[data-department="security"] {
-            border-color: var(--secondary-purple);
-            background: rgba(145, 65, 172, 0.05);
-        }
-        
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 25px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--dark-gray);
-            font-size: 1rem;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 16px 20px;
-            border: 2px solid var(--medium-gray);
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: var(--transition);
-            background: var(--light-gray);
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary-blue);
-            background: var(--white);
-            box-shadow: 0 0 0 3px rgba(26, 95, 180, 0.1);
-        }
-        
-        /* Button Styles */
-        .btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
-            color: var(--white);
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn:hover {
-            background: linear-gradient(135deg, var(--primary-blue-dark), #0a3d75);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(26, 95, 180, 0.2);
-        }
-        
-        .btn:active {
-            transform: translateY(-1px);
-        }
-        
-        .btn-text {
-            transition: var(--transition);
-        }
-        
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: var(--white);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            position: absolute;
-            opacity: 0;
-        }
-        
-        .spinner.active {
-            opacity: 1;
-        }
-        
-        .btn.loading .btn-text {
-            opacity: 0;
-        }
-        
-        .btn.loading .spinner {
-            opacity: 1;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Alert Styles */
-        .alert {
-            padding: 16px;
-            border-radius: 10px;
-            margin-top: 25px;
-            font-weight: 500;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .alert.success {
-            display: block;
-            background: rgba(46, 194, 126, 0.1);
-            color: var(--secondary-green);
-            border-left: 4px solid var(--secondary-green);
-        }
-        
-        .alert.error {
-            display: block;
-            background: rgba(224, 27, 36, 0.1);
-            color: var(--secondary-red);
-            border-left: 4px solid var(--secondary-red);
-        }
-        
-        /* Stats Card */
-        .stats-card {
-            background: linear-gradient(135deg, var(--primary-blue), #2a6bc6);
-            color: white;
-        }
-        
-        .stats-card .card-header {
-            border-bottom-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .stats-card .card-header h2 {
-            color: white;
-        }
-        
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-        
-        .stat-item {
-            text-align: center;
-            padding: 20px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            transition: var(--transition);
-        }
-        
-        .stat-item:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-5px);
-        }
-        
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            display: block;
-        }
-        
-        .stat-label {
-            font-size: 0.95rem;
-            opacity: 0.9;
-        }
-        
-        /* Footer */
-        footer {
-            margin-top: 50px;
-            text-align: center;
-            padding: 25px;
-            color: var(--text-light);
-            font-size: 0.95rem;
-            width: 100%;
-            border-top: 1px solid var(--medium-gray);
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2.2rem;
-            }
-            
-            .card-header {
-                padding: 20px;
-            }
-            
-            .card-body {
-                padding: 25px 20px;
-            }
-            
-            .department-selector {
-                grid-template-columns: 1fr;
-            }
-            
-            .stats-container {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    
 </head>
 <body>
+    <!-- Network Status Indicator -->
+    <div id="networkStatus" class="network-status">
+        <i class="fas fa-wifi"></i>
+        <span id="networkStatusText">Online</span>
+    </div>
+    
+    <!-- Loading Overlay for Initialization -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner spinner-large"></div>
+        <p style="margin-top: 20px; color: var(--primary-blue); font-weight: 600;">Initializing UOE Safe App...</p>
+    </div>
+    
+    <!-- Main Content -->
     <div class="container fade-in">
         <header>
             <div class="logo-container">
@@ -466,22 +70,28 @@
                         </div>
                     </div>
                     
-                    <form id="loginForm">
+                    <form id="loginForm" novalidate>
                         <div class="form-group">
                             <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
-                            <input type="email" id="email" placeholder="Enter your department email" required>
+                            <input type="email" id="email" name="email" autocomplete="email" placeholder="health@uoe.edu.ke" required>
                         </div>
                         <div class="form-group">
                             <label for="password"><i class="fas fa-key"></i> Password</label>
-                            <input type="password" id="password" placeholder="Enter your secure password" required>
+                            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Enter your secure password" required>
                         </div>
                         <button type="submit" class="btn" id="loginBtn">
-                            <span class="btn-text">Login to Dashboard</span>
-                            <div class="spinner" id="spinner"></div>
+                            <span class="btn-text">Login to Health Department Dashboard</span>
+                            <div class="spinner hidden" id="spinner"></div>
                         </button>
                     </form>
                     
                     <div id="alertMessage" class="alert"></div>
+                    
+                    <!-- System Status -->
+                    <div class="system-status">
+                        <div class="status-indicator online" id="systemStatusIndicator"></div>
+                        <span id="systemStatusText">All systems operational</span>
+                    </div>
                 </div>
             </div>
             
@@ -510,137 +120,33 @@
                         </div>
                     </div>
                     <p style="margin-top: 25px; opacity: 0.9; font-size: 0.95rem; line-height: 1.6;">
-                        The UOE Safe App provides a unified platform for all campus safety departments to coordinate and respond effectively to incidents.
+                        The UOE Safe App provides a unified platform for all campus safety departments to coordinate and respond effectively to incidents. Professional authentication system with real-time monitoring.
                     </p>
+                    
+                    <!-- Real-time stats -->
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>Authentication: <strong id="authStatus">Ready</strong></span>
+                            <span>Firebase: <strong id="firebaseStatus">Initializing</strong></span>
+                            <span>Network: <strong id="connectionStatus">Checking</strong></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <footer>
-            <p>University of Eldoret &copy; 2026 | Safe App Admin Panel v2.0</p>
-            <p style="margin-top: 8px; font-size: 0.9rem; opacity: 0.8;">Secure Access • Role-Based Permissions • Real-Time Monitoring</p>
+            <p>University of Eldoret &copy; 2026 | Safe App Admin Panel v2.1</p>
+            <p style="margin-top: 8px; font-size: 0.9rem; opacity: 0.8;">
+                Secure Access • Role-Based Permissions • Real-Time Monitoring • Professional Authentication System
+            </p>
         </footer>
     </div>
 
-    <!-- Load scripts in correct order -->
+    <!-- Load Firebase Configuration -->
     <script src="./Backend/Firebase/firebaseConfig.js"></script>
-    <script>
-        // DOM Elements
-        const departmentBtns = document.querySelectorAll('.department-btn');
-        const loginForm = document.getElementById('loginForm');
-        const loginBtn = document.getElementById('loginBtn');
-        const spinner = document.getElementById('spinner');
-        const alertMessage = document.getElementById('alertMessage');
-        
-        // Department selection functionality
-        departmentBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                departmentBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                // Update form based on selected department
-                updateFormForDepartment(btn.dataset.department);
-            });
-        });
-        
-        // Update form based on selected department
-        function updateFormForDepartment(department) {
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            
-            // Set placeholder based on department
-            const departmentEmails = {
-                health: "health@uoe.edu.ke",
-                outreach: "outreach@uoe.edu.ke",
-                deans: "deansoffice@uoe.edu.ke",
-                estate: "estate@uoe.edu.ke",
-                security: "security@uoe.edu.ke"
-            };
-            
-            emailInput.placeholder = `e.g. ${departmentEmails[department]}`;
-            
-            // Update button text
-            const btnText = document.querySelector('.btn-text');
-            btnText.textContent = `Login to ${getDepartmentName(department)} Dashboard`;
-            
-            // Show a brief alert about the selected department
-            showAlert(`Logging into ${getDepartmentName(department)} system.`, 'success', 2000);
-        }
-        
-        // Get full department name
-        function getDepartmentName(departmentKey) {
-            const departmentNames = {
-                health: "Health Department",
-                outreach: "Outreach Department",
-                deans: "Deans Office",
-                estate: "Estate Department",
-                security: "Security Department"
-            };
-            
-            return departmentNames[departmentKey] || "Admin";
-        }
-        
-        // Form submission handler
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const activeDepartment = document.querySelector('.department-btn.active').dataset.department;
-            
-            // Validate inputs
-            if (!email || !password) {
-                showAlert('Please fill in all fields.', 'error');
-                return;
-            }
-            
-            // Show loading state
-            loginBtn.classList.add('loading');
-            spinner.classList.add('active');
-            
-            // Simulate login process (in a real app, this would connect to Firebase)
-            setTimeout(() => {
-                // For demo purposes, show success message
-                showAlert(`Successfully logged into ${getDepartmentName(activeDepartment)} dashboard!`, 'success');
-                
-                // Reset form
-                loginForm.reset();
-                loginBtn.classList.remove('loading');
-                spinner.classList.remove('active');
-                
-                // In a real implementation, you would redirect to the dashboard
-                // window.location.href = `dashboard.html?dept=${activeDepartment}`;
-            }, 1500);
-        });
-        
-        // Show alert message
-        function showAlert(message, type, duration = 5000) {
-            alertMessage.textContent = message;
-            alertMessage.className = `alert ${type}`;
-            
-            // Hide alert after duration if specified
-            if (duration) {
-                setTimeout(() => {
-                    alertMessage.style.display = 'none';
-                }, duration);
-            }
-        }
-        
-        // Initialize with first department selected
-        updateFormForDepartment('health');
-        
-        // Add some interactive effects
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            // Add focus effect
-            input.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'translateY(-2px)';
-            });
-            
-            input.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'translateY(0)';
-            });
-        });
-    </script>
+    
+    <!-- Load Professional Authentication System -->
+   
 </body>
 </html>
